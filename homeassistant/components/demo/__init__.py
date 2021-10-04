@@ -24,6 +24,7 @@ COMPONENTS_WITH_CONFIG_ENTRY_DEMO_PLATFORM = [
     "light",
     "lock",
     "media_player",
+    "notify",
     "number",
     "select",
     "sensor",
