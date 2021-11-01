@@ -118,7 +118,6 @@ from __future__ import annotations
 
 from datetime import timedelta
 from http import HTTPStatus
-from ipaddress import ip_address
 import uuid
 
 from aiohttp import web
@@ -130,14 +129,14 @@ from homeassistant.auth.models import (
     Credentials,
     User,
 )
-from homeassistant.components import http, websocket_api
-from homeassistant.components.http.auth import async_sign_path
+from homeassistant.components import websocket_api
+from homeassistant.components.http.auth import async_sign_path, user_not_allowed_do_auth
 from homeassistant.components.http.ban import log_invalid_auth
 from homeassistant.components.http.data_validator import RequestDataValidator
 from homeassistant.components.http.view import HomeAssistantView
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.loader import bind_hass
-from homeassistant.util import dt as dt_util, network
+from homeassistant.util import dt as dt_util
 
 from . import indieauth, login_flow, mfa_setup_flow
 
@@ -226,38 +225,6 @@ async def async_setup(hass, config):
     return True
 
 
-@callback
-def user_allowed_do_auth(hass: HomeAssistant, user: User) -> str | None:
-    """Validate that user is allowed to do auth things."""
-    if not user.is_active:
-        return "User is not active"
-
-    if not user.local_only:
-        return None
-
-    request = http.current_request.get()
-
-    if not request:
-        return "No request available to validate local access"
-
-    if "cloud" in hass.config.components:
-        # pylint: disable=import-outside-toplevel
-        from hass_nabucasa import remote
-
-        if remote.is_cloud_request.get():
-            return "User is local only"
-
-    try:
-        remote = ip_address(request.remote)
-    except ValueError:
-        return "Invalid remote IP"
-
-    if network.is_local(remote):
-        return None
-
-    return "User cannot authenticate remotely"
-
-
 class TokenView(HomeAssistantView):
     """View to issue or revoke tokens."""
 
@@ -339,7 +306,7 @@ class TokenView(HomeAssistantView):
 
         user = await hass.auth.async_get_or_create_user(credential)
 
-        if user_access_error := user_allowed_do_auth(hass, user):
+        if user_access_error := user_not_allowed_do_auth(hass, user):
             return self.json(
                 {
                     "error": "access_denied",
@@ -398,7 +365,7 @@ class TokenView(HomeAssistantView):
                 {"error": "invalid_request"}, status_code=HTTPStatus.BAD_REQUEST
             )
 
-        if user_access_error := user_allowed_do_auth(hass, refresh_token.user):
+        if user_access_error := user_not_allowed_do_auth(hass, refresh_token.user):
             return self.json(
                 {
                     "error": "access_denied",
