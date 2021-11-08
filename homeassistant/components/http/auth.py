@@ -51,7 +51,9 @@ def async_sign_path(
 
 
 @callback
-def user_not_allowed_do_auth(hass: HomeAssistant, user: User) -> str | None:
+def async_user_not_allowed_do_auth(
+    hass: HomeAssistant, user: User, request: Request | None = None
+) -> str | None:
     """Validate that user is not allowed to do auth things."""
     if not user.is_active:
         return "User is not active"
@@ -59,7 +61,9 @@ def user_not_allowed_do_auth(hass: HomeAssistant, user: User) -> str | None:
     if not user.local_only:
         return None
 
-    request = current_request.get()
+    # User is marked as local only, check if they are allowed to do auth
+    if request is None:
+        request = current_request.get()
 
     if not request:
         return "No request available to validate local access"
@@ -108,7 +112,7 @@ def setup_auth(hass: HomeAssistant, app: Application) -> None:
         if refresh_token is None:
             return False
 
-        if user_not_allowed_do_auth(hass, refresh_token.user):
+        if async_user_not_allowed_do_auth(hass, refresh_token.user, request):
             return False
 
         request[KEY_HASS_USER] = refresh_token.user

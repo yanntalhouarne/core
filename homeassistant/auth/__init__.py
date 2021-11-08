@@ -216,6 +216,7 @@ class AuthManager:
     async def async_create_system_user(
         self,
         name: str,
+        *,
         group_ids: list[str] | None = None,
         local_only: bool | None = None,
     ) -> models.User:
@@ -235,6 +236,7 @@ class AuthManager:
     async def async_create_user(
         self,
         name: str,
+        *,
         group_ids: list[str] | None = None,
         local_only: bool | None = None,
     ) -> models.User:

@@ -130,7 +130,10 @@ from homeassistant.auth.models import (
     User,
 )
 from homeassistant.components import websocket_api
-from homeassistant.components.http.auth import async_sign_path, user_not_allowed_do_auth
+from homeassistant.components.http.auth import (
+    async_sign_path,
+    async_user_not_allowed_do_auth,
+)
 from homeassistant.components.http.ban import log_invalid_auth
 from homeassistant.components.http.data_validator import RequestDataValidator
 from homeassistant.components.http.view import HomeAssistantView
@@ -306,7 +309,7 @@ class TokenView(HomeAssistantView):
 
         user = await hass.auth.async_get_or_create_user(credential)
 
-        if user_access_error := user_not_allowed_do_auth(hass, user):
+        if user_access_error := async_user_not_allowed_do_auth(hass, user):
             return self.json(
                 {
                     "error": "access_denied",
@@ -365,7 +368,9 @@ class TokenView(HomeAssistantView):
                 {"error": "invalid_request"}, status_code=HTTPStatus.BAD_REQUEST
             )
 
-        if user_access_error := user_not_allowed_do_auth(hass, refresh_token.user):
+        if user_access_error := async_user_not_allowed_do_auth(
+            hass, refresh_token.user
+        ):
             return self.json(
                 {
                     "error": "access_denied",

@@ -75,7 +75,7 @@ import voluptuous_serialize
 
 from homeassistant import data_entry_flow
 from homeassistant.auth.models import Credentials, User
-from homeassistant.components.http.auth import user_not_allowed_do_auth
+from homeassistant.components.http.auth import async_user_not_allowed_do_auth
 from homeassistant.components.http.ban import (
     log_invalid_auth,
     process_success_login,
@@ -177,7 +177,7 @@ class LoginFlowBaseView(HomeAssistantView):
             user = await hass.auth.async_get_user_by_credentials(result_obj)
 
         if user is not None and (
-            user_access_error := user_not_allowed_do_auth(hass, user)
+            user_access_error := async_user_not_allowed_do_auth(hass, user)
         ):
             return self.json_message(
                 f"Login blocked: {user_access_error}", HTTPStatus.FORBIDDEN

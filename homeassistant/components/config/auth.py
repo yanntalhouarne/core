@@ -72,7 +72,7 @@ async def websocket_delete(hass, connection, msg):
 async def websocket_create(hass, connection, msg):
     """Create a user."""
     user = await hass.auth.async_create_user(
-        msg["name"], msg.get("group_ids"), local_only=msg.get("local_only")
+        msg["name"], group_ids=msg.get("group_ids"), local_only=msg.get("local_only")
     )
 
     connection.send_message(
