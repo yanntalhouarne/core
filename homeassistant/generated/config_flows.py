@@ -50,7 +50,6 @@ FLOWS = [
     "canary",
     "cast",
     "cert_expiry",
-    "climacell",
     "cloudflare",
     "co2signal",
     "coinbase",
