@@ -528,7 +528,7 @@ async def test_domains_gets_domains_excludes_ignore_and_disabled(manager):
     ).add_to_manager(manager)
     MockConfigEntry(domain="test3").add_to_manager(manager)
     MockConfigEntry(
-        domain="disabled", disabled_by=config_entries.DISABLED_USER
+        domain="disabled", disabled_by=config_entries.ConfigEntryDisabler.USER
     ).add_to_manager(manager)
     assert manager.async_domains() == ["test", "test2", "test3"]
     assert manager.async_domains(include_ignore=False) == ["test", "test2", "test3"]
@@ -1322,7 +1322,7 @@ async def test_entry_disable_succeed(hass, manager):
 
     # Disable
     assert await manager.async_set_disabled_by(
-        entry.entry_id, config_entries.DISABLED_USER
+        entry.entry_id, config_entries.ConfigEntryDisabler.USER
     )
     assert len(async_unload_entry.mock_calls) == 1
     assert len(async_setup.mock_calls) == 0
@@ -1357,7 +1357,7 @@ async def test_entry_disable_without_reload_support(hass, manager):
 
     # Disable
     assert not await manager.async_set_disabled_by(
-        entry.entry_id, config_entries.DISABLED_USER
+        entry.entry_id, config_entries.ConfigEntryDisabler.USER
     )
     assert len(async_setup.mock_calls) == 0
     assert len(async_setup_entry.mock_calls) == 0
@@ -1373,7 +1373,9 @@ async def test_entry_disable_without_reload_support(hass, manager):
 
 async def test_entry_enable_without_reload_support(hass, manager):
     """Test that we can disable an entry without reload support."""
-    entry = MockConfigEntry(domain="comp", disabled_by=config_entries.DISABLED_USER)
+    entry = MockConfigEntry(
+        domain="comp", disabled_by=config_entries.ConfigEntryDisabler.USER
+    )
     entry.add_to_hass(hass)
 
     async_setup = AsyncMock(return_value=True)
@@ -1397,7 +1399,7 @@ async def test_entry_enable_without_reload_support(hass, manager):
 
     # Disable
     assert not await manager.async_set_disabled_by(
-        entry.entry_id, config_entries.DISABLED_USER
+        entry.entry_id, config_entries.ConfigEntryDisabler.USER
     )
     assert len(async_setup.mock_calls) == 1
     assert len(async_setup_entry.mock_calls) == 1

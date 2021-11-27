@@ -22,6 +22,7 @@ from homeassistant.exceptions import (
 )
 from homeassistant.helpers import device_registry, entity_registry
 from homeassistant.helpers.event import Event
+from homeassistant.helpers.frame import report
 from homeassistant.helpers.typing import (
     UNDEFINED,
     ConfigType,
@@ -30,6 +31,7 @@ from homeassistant.helpers.typing import (
 )
 from homeassistant.setup import async_process_deps_reqs, async_setup_component
 from homeassistant.util.decorator import Registry
+from homeassistant.util.enum import StrEnum
 import homeassistant.util.uuid as uuid_util
 
 if TYPE_CHECKING:
@@ -126,7 +128,15 @@ RECONFIGURE_NOTIFICATION_ID = "config_entry_reconfigure"
 
 EVENT_FLOW_DISCOVERED = "config_entry_discovered"
 
-DISABLED_USER = "user"
+
+class ConfigEntryDisabler(StrEnum):
+    """What disabled a config entry."""
+
+    USER = "user"
+
+
+# DISABLED_* are deprecated, to be removed in 2022.3
+DISABLED_USER = ConfigEntryDisabler.USER.value
 
 RELOAD_AFTER_UPDATE_DELAY = 30
 
@@ -193,7 +203,7 @@ class ConfigEntry:
         unique_id: str | None = None,
         entry_id: str | None = None,
         state: ConfigEntryState = ConfigEntryState.NOT_LOADED,
-        disabled_by: str | None = None,
+        disabled_by: ConfigEntryDisabler | None = None,
     ) -> None:
         """Initialize a config entry."""
         # Unique id of the config entry
@@ -235,6 +245,16 @@ class ConfigEntry:
         self.unique_id = unique_id
 
         # Config entry is disabled
+        if isinstance(disabled_by, str) and not isinstance(
+            disabled_by, ConfigEntryDisabler
+        ):
+            report(  # type: ignore[unreachable]
+                "uses str for config entry disabled_by. This is deprecated and will "
+                "stop working in Home Assistant 2022.3, it should be updated to use "
+                "ConfigEntryDisabler instead",
+                error_if_core=False,
+            )
+            disabled_by = ConfigEntryDisabler(disabled_by)
         self.disabled_by = disabled_by
 
         # Supports unload
@@ -922,7 +942,9 @@ class ConfigEntries:
                 # New in 0.104
                 unique_id=entry.get("unique_id"),
                 # New in 2021.3
-                disabled_by=entry.get("disabled_by"),
+                disabled_by=ConfigEntryDisabler(entry["disabled_by"])
+                if entry.get("disabled_by")
+                else None,
                 # New in 2021.6
                 pref_disable_new_entities=pref_disable_new_entities,
                 pref_disable_polling=entry.get("pref_disable_polling"),
@@ -983,7 +1005,7 @@ class ConfigEntries:
         return await self.async_setup(entry_id)
 
     async def async_set_disabled_by(
-        self, entry_id: str, disabled_by: str | None
+        self, entry_id: str, disabled_by: ConfigEntryDisabler | None
     ) -> bool:
         """Disable an entry.
 
@@ -992,7 +1014,18 @@ class ConfigEntries:
         if (entry := self.async_get_entry(entry_id)) is None:
             raise UnknownEntry
 
-        if entry.disabled_by == disabled_by:
+        if isinstance(disabled_by, str) and not isinstance(
+            disabled_by, ConfigEntryDisabler
+        ):
+            report(  # type: ignore[unreachable]
+                "uses str for config entry disabled_by. This is deprecated and will "
+                "stop working in Home Assistant 2022.3, it should be updated to use "
+                "ConfigEntryDisabler instead",
+                error_if_core=False,
+            )
+            disabled_by = ConfigEntryDisabler(disabled_by)
+
+        if entry.disabled_by is disabled_by:
             return True
 
         entry.disabled_by = disabled_by
