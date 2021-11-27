@@ -1551,7 +1551,8 @@ def _handle_entry_updated_filter(event: Event) -> bool:
     if (
         event.data["action"] != "update"
         or "disabled_by" not in event.data["changes"]
-        or event.data["changes"]["disabled_by"] == entity_registry.DISABLED_CONFIG_ENTRY
+        or event.data["changes"]["disabled_by"]
+        is entity_registry.RegistryEntryDisabler.CONFIG_ENTRY
     ):
         return False
     return True
