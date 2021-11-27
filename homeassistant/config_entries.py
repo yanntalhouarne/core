@@ -1546,7 +1546,7 @@ def _handle_entry_updated_filter(event: Event) -> bool:
     """Handle entity registry entry update filter.
 
     Only handle changes to "disabled_by".
-    If "disabled_by" was DISABLED_CONFIG_ENTRY, reload is not needed.
+    If "disabled_by" was CONFIG_ENTRY, reload is not needed.
     """
     if (
         event.data["action"] != "update"
