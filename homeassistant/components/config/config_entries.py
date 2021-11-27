@@ -305,7 +305,7 @@ async def config_entry_update(hass, connection, msg):
         "entry_id": str,
         # We only allow setting disabled_by user via API.
         # No Enum support like this in voluptuous, use .value
-        "disabled_by": vol.Any(config_entries.ConfigEntryDisabler.USER, None),
+        "disabled_by": vol.Any(config_entries.ConfigEntryDisabler.USER.value, None),
     }
 )
 async def config_entry_disable(hass, connection, msg):
